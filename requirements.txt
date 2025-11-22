@@ -1,7 +1,5 @@
 Flask==3.0.0
 
-Use CPU-only PyTorch to save space and avoid GPU library errors
-
 --find-links https://www.google.com/search?q=https://download.pytorch.org/whl/torch_stable.html
 torch==2.2.1+cpu
 torchvision==0.17.1+cpu
@@ -16,3 +14,4 @@ Werkzeug==3.0.1
 Flask-Login==0.6.3
 requests==2.31.0
 gunicorn==21.2.0
+
