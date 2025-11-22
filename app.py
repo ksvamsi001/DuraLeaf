@@ -24,7 +24,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agroscan.db'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 # --- GOOGLE API KEY ---
-GOOGLE_API_KEY = "<YOUR_API_KEY>" 
+GOOGLE_API_KEY = "AIzaSyB5Bc9VE8GVyTRkdv_clAZ0kPB2fpiYkxc" 
 
 # --- DYNAMIC MODEL SELECTION ---
 # We will determine the best model at startup
@@ -450,3 +450,4 @@ def chat_api():
 if __name__ == '__main__':
 
     app.run(debug=True)
+
