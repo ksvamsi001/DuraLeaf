@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
+     style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1625246333195-9818e0f2c4ac?q=80&w=2070'); background-size: cover; background-position: center;">
+    
+    <div class="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-xl p-10 rounded-[2rem] shadow-2xl border border-white/40">
+        
+        <!-- Headers -->
+        <div class="text-center">
+            <div class="mx-auto h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 text-xl mb-4">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight" id="form-title">
+                Welcome Back
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 font-medium" id="form-subtitle">
+                Sign in to protect your crops
+            </p>
+        </div>
+
+        <!-- Toggle Buttons -->
+        <div class="flex bg-gray-100 p-1.5 rounded-2xl mb-8">
+            <button onclick="showLogin()" id="tab-login" class="w-1/2 py-3 rounded-xl text-sm font-bold shadow-sm bg-white text-green-700 transition-all transform duration-200">
+                Log In
+            </button>
+            <button onclick="showRegister()" id="tab-register" class="w-1/2 py-3 rounded-xl text-sm font-bold text-gray-500 hover:text-green-700 transition-all">
+                Sign Up
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <form action="{{ url_for('auth') }}" method="POST" id="login-form" class="space-y-5">
+            <input type="hidden" name="action" value="login">
+            
+            <div class="group">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Email Address</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <input name="email" id="login-email" type="email" value="{{ prefill_email }}"
+                           class="pl-11 block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-100 sm:text-sm py-3.5 transition-all {{ 'border-red-500 focus:ring-red-100' if login_error_email else 'focus:border-green-500' }}" 
+                           placeholder="you@example.com">
+                </div>
+                {% if login_error_email %}
+                    <p class="text-xs text-red-500 mt-1.5 font-bold ml-1 flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ login_error_email }}</p>
+                {% endif %}
+            </div>
+
+            <div class="group">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input name="password" id="login-pass" type="password" 
+                           class="pl-11 pr-10 block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-100 sm:text-sm py-3.5 transition-all {{ 'border-red-500 focus:ring-red-100' if login_error_pass else 'focus:border-green-500' }}" 
+                           placeholder="••••••••">
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer" onclick="togglePassword('login-pass', this)">
+                        <i class="fas fa-eye text-gray-400 hover:text-green-600 transition"></i>
+                    </div>
+                </div>
+                {% if login_error_pass %}
+                    <p class="text-xs text-red-500 mt-1.5 font-bold ml-1 flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ login_error_pass }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-green-500/30 text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition-all transform hover:-translate-y-0.5">
+                Sign In
+            </button>
+        </form>
+
+        <!-- Register Form -->
+        <form action="{{ url_for('auth') }}" method="POST" id="register-form" class="space-y-5 hidden" onsubmit="return validateRegister()">
+            <input type="hidden" name="action" value="register">
+            
+            <div class="group">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">User name</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <!-- Added onkeyup listener -->
+                    <input name="username" id="reg-name" type="text" value="{{ prefill_name }}" onkeyup="checkAvailability('username', this.value)"
+                           class="pl-11 block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 sm:text-sm py-3.5 transition-all {{ 'border-red-500 focus:ring-red-100' if reg_error_name else '' }}" 
+                           placeholder="John Doe">
+                </div>
+                <p class="text-xs text-red-500 mt-1 hidden ml-1 font-bold" id="err-reg-name">Name is required</p>
+                <!-- Real-time error container -->
+                <p class="text-xs text-red-500 mt-1 hidden ml-1 font-bold" id="realtime-err-username"><i class="fas fa-exclamation-circle"></i> Username already exists</p>
+                {% if reg_error_name %}
+                    <p class="text-xs text-red-500 mt-1 ml-1 font-bold flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ reg_error_name }}</p>
+                {% endif %}
+            </div>
+
+            <div class="group">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Email Address</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <!-- Added onkeyup listener -->
+                    <input name="email" id="reg-email" type="email" value="{{ prefill_email }}" onkeyup="checkAvailability('email', this.value)"
+                           class="pl-11 block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 sm:text-sm py-3.5 transition-all {{ 'border-red-500 focus:ring-red-100' if reg_error_email else '' }}" 
+                           placeholder="you@example.com">
+                </div>
+                <p class="text-xs text-red-500 mt-1 hidden ml-1 font-bold" id="err-reg-email">Valid email required</p>
+                <!-- Real-time error container -->
+                <p class="text-xs text-red-500 mt-1 hidden ml-1 font-bold" id="realtime-err-email"><i class="fas fa-exclamation-circle"></i> Email already registered</p>
+                {% if reg_error_email %}
+                    <p class="text-xs text-red-500 mt-1 ml-1 font-bold flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ reg_error_email }}</p>
+                {% endif %}
+            </div>
+
+            <div class="group">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Create Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input name="password" id="reg-pass" type="password" onkeyup="checkStrength(this.value)" class="pl-11 pr-10 block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 sm:text-sm py-3.5 transition-all" placeholder="Strong password...">
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer" onclick="togglePassword('reg-pass', this)">
+                        <i class="fas fa-eye text-gray-400 hover:text-blue-600 transition"></i>
+                    </div>
+                </div>
+                
+                <div class="mt-3 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div id="strength-bar" class="h-full bg-red-500 w-0 transition-all duration-500"></div>
+                </div>
+                <p id="strength-text" class="text-xs text-gray-400 mt-1 text-right font-medium">Enter password...</p>
+            </div>
+
+            <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-500/30 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all transform hover:-translate-y-0.5">
+                Join DuraLeaf
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showLogin() {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('tab-login').classList.add('bg-white', 'text-green-700', 'shadow-sm');
+        document.getElementById('tab-login').classList.remove('text-gray-500');
+        document.getElementById('tab-register').classList.remove('bg-white', 'text-blue-700', 'shadow-sm');
+        document.getElementById('tab-register').classList.add('text-gray-500');
+        document.getElementById('form-title').innerText = "Welcome Back";
+        document.getElementById('form-subtitle').innerText = "Sign in to DuraLeaf Dashboard";
+    }
+
+    function showRegister() {
+        document.getElementById('register-form').classList.remove('hidden');
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('tab-register').classList.add('bg-white', 'text-blue-700', 'shadow-sm');
+        document.getElementById('tab-register').classList.remove('text-gray-500');
+        document.getElementById('tab-login').classList.remove('bg-white', 'text-green-700', 'shadow-sm');
+        document.getElementById('tab-login').classList.add('text-gray-500');
+        document.getElementById('form-title').innerText = "Join DuraLeaf";
+        document.getElementById('form-subtitle').innerText = "Create your account";
+    }
+
+    function togglePassword(fieldId, icon) {
+        const input = document.getElementById(fieldId);
+        const iconEl = icon.querySelector('i');
+        if (input.type === "password") {
+            input.type = "text";
+            iconEl.classList.remove('fa-eye');
+            iconEl.classList.add('fa-eye-slash');
+        } else {
+            input.type = "password";
+            iconEl.classList.remove('fa-eye-slash');
+            iconEl.classList.add('fa-eye');
+        }
+    }
+
+    // --- NEW: REAL TIME CHECKER ---
+    let timeout = null; // Debounce timer
+    
+    async function checkAvailability(field, value) {
+        // Clear previous timer (Debounce)
+        clearTimeout(timeout);
+        
+        const errElement = document.getElementById('realtime-err-' + field);
+        const inputElement = field === 'username' ? document.getElementById('reg-name') : document.getElementById('reg-email');
+
+        // Reset UI if empty
+        if (!value) {
+            errElement.classList.add('hidden');
+            inputElement.classList.remove('border-red-500', 'focus:ring-red-100');
+            return;
+        }
+
+        // Wait 500ms after user stops typing before checking
+        timeout = setTimeout(async () => {
+            try {
+                const response = await fetch('/api/check_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [field]: value })
+                });
+                const data = await response.json();
+                
+                if ((field === 'username' && data.username_exists) || (field === 'email' && data.email_exists)) {
+                    // SHOW ERROR
+                    errElement.classList.remove('hidden');
+                    inputElement.classList.add('border-red-500', 'focus:ring-red-100');
+                    inputElement.classList.remove('focus:border-blue-500', 'focus:ring-blue-100');
+                } else {
+                    // HIDE ERROR
+                    errElement.classList.add('hidden');
+                    inputElement.classList.remove('border-red-500', 'focus:ring-red-100');
+                    inputElement.classList.add('focus:border-blue-500', 'focus:ring-blue-100');
+                }
+            } catch (e) {
+                console.error("Check failed", e);
+            }
+        }, 500);
+    }
+
+    function showError(id, show) {
+        const el = document.getElementById(id);
+        const input = el.previousElementSibling.querySelector('input');
+        if(show) {
+            el.classList.remove('hidden');
+            input.classList.add('border-red-500', 'bg-red-50');
+            input.classList.remove('border-gray-200', 'bg-gray-50');
+        } else {
+            el.classList.add('hidden');
+            input.classList.remove('border-red-500', 'bg-red-50');
+            input.classList.add('border-gray-200', 'bg-gray-50');
+        }
+    }
+
+    function validateRegister() {
+        let valid = true;
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const pass = document.getElementById('reg-pass').value;
+
+        if(!name) { showError('err-reg-name', true); valid = false; } else { showError('err-reg-name', false); }
+        if(!email) { showError('err-reg-email', true); valid = false; } else { showError('err-reg-email', false); }
+        
+        // Prevent submission if "Already Exists" errors are visible
+        if (!document.getElementById('realtime-err-username').classList.contains('hidden')) valid = false;
+        if (!document.getElementById('realtime-err-email').classList.contains('hidden')) valid = false;
+
+        const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{6,})");
+        if(!pass || !strongRegex.test(pass)) {
+            showGlobalToast("Weak Password! Needs Uppercase, Number, Symbol & 6+ chars", "error");
+            document.getElementById('reg-pass').classList.add('border-red-500', 'bg-red-50');
+            valid = false;
+        } else {
+             document.getElementById('reg-pass').classList.remove('border-red-500', 'bg-red-50');
+        }
+        return valid;
+    }
+
+    function checkStrength(password) {
+        const bar = document.getElementById('strength-bar');
+        const text = document.getElementById('strength-text');
+        let strength = 0;
+        if (password.length > 5) strength += 1;
+        if (password.match(/[a-z]+/)) strength += 1;
+        if (password.match(/[A-Z]+/)) strength += 1;
+        if (password.match(/[0-9]+/)) strength += 1;
+        if (password.match(/[$@#&!]+/)) strength += 1;
+
+        switch(strength) {
+            case 0: bar.style.width = "0%"; bar.className = "h-full transition-all bg-gray-200"; text.innerText = ""; break;
+            case 1: 
+            case 2: bar.style.width = "30%"; bar.className = "h-full transition-all bg-red-500"; text.innerText = "Weak"; text.className = "text-xs mt-1 text-right text-red-500 font-bold"; break;
+            case 3: 
+            case 4: bar.style.width = "60%"; bar.className = "h-full transition-all bg-yellow-400"; text.innerText = "Medium"; text.className = "text-xs mt-1 text-right text-yellow-600 font-bold"; break;
+            case 5: bar.style.width = "100%"; bar.className = "h-full transition-all bg-green-500"; text.innerText = "Strong"; text.className = "text-xs mt-1 text-right text-green-600 font-bold"; break;
+        }
+    }
+</script>
+{% endblock %}

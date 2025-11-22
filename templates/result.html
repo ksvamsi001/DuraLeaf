@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" id="report-content">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 lg:mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Diagnostic Report</h1>
+            <p class="text-sm text-gray-500 mt-1">Analysis ID: #{{ scan.id }} | {{ scan.date_posted.strftime('%Y-%m-%d') }}</p>
+        </div>
+        <button onclick="downloadPDF()" data-html2pdf-ignore="true" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-xl flex items-center justify-center shadow-lg transition transform hover:scale-105 text-sm font-bold">
+            <i class="fas fa-file-pdf mr-2"></i> Download PDF
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-3 border border-gray-100">
+                <img src="{{ url_for('static', filename='uploads/' + image_url) }}" class="w-full h-64 object-cover rounded-xl shadow-inner" alt="Scanned Leaf">
+                <div class="mt-4 text-center pb-2">
+                    {% if scan.is_ai_override %}
+                        <span class="inline-block bg-blue-50 text-blue-600 border border-blue-100 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide mb-2">AI Corrected</span>
+                    {% else %}
+                        <span class="inline-block bg-red-50 text-red-600 border border-red-100 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wide mb-2">Detected</span>
+                    {% endif %}
+                    <h2 class="text-lg font-bold text-gray-900 leading-tight">{{ scan.disease_name.replace('_', ' ') }}</h2>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                <h3 class="text-base font-bold text-gray-700 mb-3">Infection Severity</h3>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-700 uppercase">Critical</span>
+                        <span class="text-sm font-bold text-red-600">{{ "%.1f"|format(scan.severity) }}%</span>
+                    </div>
+                    <div class="overflow-hidden h-2.5 text-xs flex rounded-full bg-gray-100">
+                        <div style="width:{{ scan.severity }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500 transition-all duration-1000"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border-t-4 border-green-500 relative">
+                <div class="flex items-center mb-6">
+                    <div class="bg-green-50 p-3 rounded-xl mr-4 text-green-600">
+                        <i class="fas fa-robot text-xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900">DuraLeaf AI Insight</h2>
+                </div>
+                
+                <div class="text-gray-600 text-sm md:text-base leading-relaxed">
+                    <p class="italic mb-6 bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">"{{ ai_data.description }}"</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-yellow-50 p-5 rounded-xl border border-yellow-100">
+                            <h4 class="font-bold text-yellow-800 mb-3 flex items-center"><i class="fas fa-search mr-2"></i>Symptoms</h4>
+                            <ul class="space-y-2 text-sm text-yellow-900">
+                                {% for sym in ai_data.symptoms %}
+                                    <li class="flex items-start"><span class="mr-2">•</span>{{ sym }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="bg-green-50 p-5 rounded-xl border border-green-100">
+                            <h4 class="font-bold text-green-800 mb-3 flex items-center"><i class="fas fa-shield-alt mr-2"></i>Organic Cure</h4>
+                            <ul class="space-y-2 text-sm text-green-900">
+                                {% for step in ai_data.steps %}
+                                    <li class="flex items-start"><span class="mr-2">•</span>{{ step }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-shopping-bag mr-3 text-blue-500"></i> Recommended Products
+                </h3>
+                <div class="grid gap-3">
+                    {% for product in ai_data.products %}
+                    <a href="https://www.amazon.in/s?k={{ product }}" target="_blank" class="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition group">
+                        <span class="font-medium text-gray-700 group-hover:text-blue-700 text-sm md:text-base">{{ product }}</span>
+                        <i class="fas fa-external-link-alt text-gray-300 group-hover:text-blue-500"></i>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FLOATING CHATBOT -->
+<div data-html2pdf-ignore="true" class="fixed bottom-5 right-5 z-40">
+    <div id="chat-window" class="hidden bg-white w-[90vw] md:w-96 rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all transform origin-bottom-right mb-16 md:mb-0">
+        <div class="bg-green-600 p-4 flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-robot"></i>
+                <h3 class="font-bold text-sm">DuraLeaf Helper</h3>
+            </div>
+            <button onclick="toggleChat()" class="hover:bg-green-700 p-1 rounded"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="chat-box" class="h-72 p-4 overflow-y-auto bg-gray-50 space-y-3 custom-scrollbar text-sm">
+            <div class="bg-white border border-gray-200 p-3 rounded-br-xl rounded-bl-xl rounded-tr-xl inline-block shadow-sm text-gray-700">
+                Hello! I see <strong>{{ scan.disease_name.replace('_', ' ') }}</strong>. Ask me anything!
+            </div>
+        </div>
+        <div class="p-3 border-t border-gray-100 bg-white flex gap-2">
+            <input type="text" id="user-input" class="flex-grow px-4 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-green-500" placeholder="Type a question..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()" class="bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-green-700 shadow-md transition flex-shrink-0">
+                <i class="fas fa-paper-plane text-xs"></i>
+            </button>
+        </div>
+    </div>
+    <button id="chat-trigger" onclick="toggleChat()" class="bg-green-600 hover:bg-green-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-110">
+        <i class="fas fa-comment-dots text-2xl"></i>
+    </button>
+</div>
+
+<script>
+    function downloadPDF() {
+        const element = document.getElementById('report-content');
+        const opt = {
+            margin: [0.2, 0.2, 0.2, 0.2],
+            filename: 'DuraLeaf_Report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    function toggleChat() {
+        const window = document.getElementById('chat-window');
+        if (window.classList.contains('hidden')) {
+            window.classList.remove('hidden');
+            setTimeout(() => document.getElementById('user-input').focus(), 100);
+        } else {
+            window.classList.add('hidden');
+        }
+    }
+
+    function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const message = input.value.trim();
+        if(!message) return;
+
+        chatBox.innerHTML += `<div class="flex justify-end"><div class="bg-green-600 text-white p-3 rounded-tl-xl rounded-tr-xl rounded-bl-xl inline-block shadow-sm max-w-[85%]">${message}</div></div>`;
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Loading
+        const loadId = 'load-' + Date.now();
+        chatBox.innerHTML += `<div id="${loadId}" class="flex justify-start"><div class="bg-white border p-3 rounded-br-xl rounded-bl-xl rounded-tr-xl inline-block text-gray-400"><i class="fas fa-circle-notch fa-spin"></i></div></div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await fetch('/chat_api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: message, disease: "{{ scan.disease_name }}" })
+            });
+            const data = await response.json();
+            document.getElementById(loadId).remove();
+            chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-white border border-gray-200 text-gray-700 p-3 rounded-br-xl rounded-bl-xl rounded-tr-xl inline-block shadow-sm max-w-[90%]">${data.reply}</div></div>`;
+        } catch(err) {
+            document.getElementById(loadId).remove();
+            chatBox.innerHTML += `<div class="flex justify-start"><div class="bg-red-50 border border-red-100 text-red-600 p-3 rounded-br-xl rounded-bl-xl rounded-tr-xl inline-block shadow-sm max-w-[90%] text-xs">Connection Issue. Retrying...</div></div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+{% endblock %}
