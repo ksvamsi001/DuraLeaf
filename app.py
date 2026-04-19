@@ -7,6 +7,7 @@ import requests
 import time
 import base64
 from datetime import datetime
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 from torchvision import models, transforms
@@ -24,8 +25,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agroscan.db'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 # --- GOOGLE API KEY ---
-GOOGLE_API_KEY = "AIzaSyB5Bc9VE8GVyTRkdv_clAZ0kPB2fpiYkxc" 
+# GOOGLE_API_KEY = "AIzaSyB5Bc9VE8GVyTRkdv_clAZ0kPB2fpiYkxc" 
+load_dotenv()
 
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GOOGLE_API_KEY:
+    raise ValueError("GEMINI_API_KEY not set")
 # --- DYNAMIC MODEL SELECTION ---
 # We will determine the best model at startup
 ACTIVE_MODEL = "gemini-1.5-flash" # Default fallback
