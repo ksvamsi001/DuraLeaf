@@ -19,7 +19,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # --- CONFIGURATION ---
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '5f352379324c22463451387a0aec5d28'
+# app.config['SECRET_KEY'] = '5f352379324c22463451387a0aec5d28'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agroscan.db'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
